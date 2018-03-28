@@ -49,7 +49,7 @@ def insertLunch():
         session = connect()
         cur = session.cursor()
         data = request.get_json()
-        if data.token == getenv("LUNCH_TOKEN"):
+        if data['token'] == getenv("LUNCH_TOKEN"):
             try:
                 cur.execute(sql, data)
                 session.commit()
