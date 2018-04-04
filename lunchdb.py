@@ -50,11 +50,14 @@ def plotRatings():
     output = {}
     output['success'] = False
     username = request.args.get('username')
-    sql = "SELECT rating FROM lunch_reviews WHERE username = %s"
-    #try:
     session = connect()
     cur = session.cursor()
-    cur.execute(sql, (username,))
+    if username == 'everyone':
+        sql = "SELECT rating FROM lunch_reviews"
+        cur.execute(sql)
+    else:
+        sql = "SELECT rating FROM lunch_reviews WHERE username = %s"
+        cur.execute(sql, (username,))
     rows = cur.fetchall()
     ratings_list = [ i[0] for i in rows ]
     if len(ratings_list) != 0:
