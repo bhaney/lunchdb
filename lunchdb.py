@@ -57,12 +57,13 @@ def plotRatings():
     cur.execute(sql, (username,))
     rows = cur.fetchall()
     ratings_list = [ i[0] for i in rows ]
-    histRatings(username, ratings_list)
-    output['success'] = True
-    output['text'] = 'https://bots.bijanhaney.com/plots/'+username+'_ratings.png'
-    #except(Exception, psycopg2.Error) as error:
-    #output['success'] = False
-    #output['text'] = error.pgerror
+    if len(ratings_list) != 0:
+    	histRatings(username, ratings_list)
+    	output['success'] = True
+    	output['text'] = 'https://bots.bijanhaney.com/plots/'+username+'_ratings.png'
+    else:
+        output['success'] = False
+        output['text'] = 'User has submitted no reviews to the database.'
     cur.close()
     session.close()
     return jsonify(output)

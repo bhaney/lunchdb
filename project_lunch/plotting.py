@@ -23,4 +23,5 @@ def histRatings(username,rating_list):
     plt.axes().set_xticklabels(['1','2','3','4','5','6','7','8','9','10'], minor=True)
     #save figure
     plt.savefig(getenv("PLOT_PATH")+'/'+username+'_ratings.png');
+    plt.close()
 
