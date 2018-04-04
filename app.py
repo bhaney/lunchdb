@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.6
 from flask import Flask,jsonify,request,render_template
 from flask_cors import CORS, cross_origin
 from config import config
@@ -5,40 +6,18 @@ import psycopg2
 import csv
 from os import getenv,system
 
-def connect():
-    conn = None
-    try:
-        params = config()
-        conn = psycopg2.connect(**params)
-        return conn
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+from .csv_helper import getCsv
+from .db_helper import connect
+from .plotting import histRatings
 
-lunchdb = Flask(__name__)
+app = Flask(__name__)
 
-@lunchdb.route('/getcsv', methods=["GET"])
+@app.route('/getcsv', methods=["GET"])
 def makeCsv():
-    output = {}
-    session = connect()
-    cur = session.cursor()
-    csv_path = getenv("CSV_PATH")+'/lunch_reviews.csv'
-    try:
-        with open(csv_path, 'w') as csvfile:
-            cw = csv.writer(csvfile)
-            cur.execute('SELECT * FROM lunch_reviews')
-            rows = cur.fetchall()
-            cw.writerow([i[0] for i in cur.description])
-            cw.writerows(rows)
-        output['success'] = True
-        output['text'] = 'https://bots.bijanhaney.com/csv_files/lunch_reviews.csv'
-    except (Exception, psycopg2.Error) as error:
-        output['success'] = False
-        output['text'] = error.pgerror
-    cur.close()
-    session.close()
-    return jsonify(output)
+    results = getCsv()
+    return jsonify(results)
 
-@lunchdb.route('/insert', methods=["GET","POST"])
+@app.route('/insert', methods=["GET","POST"])
 def insertLunch():
     output = {}
     sql = """INSERT INTO lunch_reviews(timestamp, suggested_lunch, weather,
@@ -65,9 +44,31 @@ def insertLunch():
         session.close()
         return jsonify(output)
 
-@lunchdb.route('/')
+@app.route('/plot/ratings', methods=["GET"])
+def plotRatings():
+    output = {}
+    output['success'] = False
+    username = request.args.get('username')
+    sql = "SELECT rating FROM lunch_reviews WHERE username = %s"
+    #try:
+    session = connect()
+    cur = session.cursor()
+    cur.execute(sql, (username,))
+    rows = cur.fetchall()
+    ratings_list = [ i[0] for i in rows ]
+    histRatings(username, ratings_list)
+    output['success'] = True
+    output['text'] = 'https://bots.bijanhaney.com/plots/'+username+'_ratings.png'
+    #except(Exception, psycopg2.Error) as error:
+    #output['success'] = False
+    #output['text'] = error.pgerror
+    cur.close()
+    session.close()
+    return jsonify(output)
+
+@app.route('/')
 def index():
     return render_template('index.html')
 
 if __name__ == "__main__":
-    lunchdb.run()
+    app.run()
