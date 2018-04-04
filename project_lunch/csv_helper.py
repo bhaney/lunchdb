@@ -1,6 +1,7 @@
 from .db_helper import connect
 import csv
 import psycopg2
+from os import getenv
 
 def getCsv():
     output = {}
