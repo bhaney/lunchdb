@@ -10,6 +10,7 @@ from project_lunch.csv_helper import getCsv
 from project_lunch.db_helper import connect
 from project_lunch.plotting import histRatings
 from project_lunch.config import config
+from project_lunch.reviews import (checkLocation, insertLocationAlias, insertLocation, insertReview)
 
 app = Flask(__name__)
 
@@ -18,40 +19,58 @@ def makeCsv():
     results = getCsv()
     return jsonify(results)
 
-@app.route('/insert', methods=["GET","POST"])
-def insertLunch():
-    output = {}
-    sql = """INSERT INTO lunch_reviews(timestamp, suggested_lunch, weather,
-             temperature_f, username, actual_lunch, rating, comment) 
-             VALUES(to_timestamp(%(time)s / 1000.0), %(suggest)s, %(weather)s, %(temp)s, 
-             %(user)s, %(actual)s, %(rating)s, %(comment)s); """
+@app.route('/insert/review', methods=["GET","POST"])
+def postLunch():
     if request.method == 'POST':
-        session = connect()
-        cur = session.cursor()
+        output = {}
         data = request.get_json()
         if data['token'] == getenv("LUNCH_TOKEN"):
-            try:
-                cur.execute(sql, data)
-                session.commit()
-                output['success'] = True
-                output['text'] = 'OK'
-            except (Exception, psycopg2.Error) as error:
-                output['success'] = False
-                output['text'] = error.pgerror
+            conn = connect()
+            cur = conn.cursor()
+            location = data['actual']
+            output = insertReview(cur, data)
+            if output['success']:
+                conn.commit()
+            output['location'] = checkLocation(cur, location)
         else:
-           output['success'] = False
-           output['text'] = 'API token is not valid.'
+            output['success'] = False
+            output['text'] = 'API token is not valid.'
+            output['location'] = True
         cur.close()
-        session.close()
+        conn.close()
         return jsonify(output)
+
+'''
+@app.route('/insert/location', methods=["GET","POST"])
+def postLocation():
+    if request.method == 'POST':
+        output = {}
+        data = request.get_json()
+        if data['token'] == getenv("LUNCH_TOKEN"):
+            conn = connect()
+            cur = conn.cursor()
+            location_exists = data['exists']
+            location_name = data['exists']
+            output = insertReview(cur, data)
+            if output['success']:
+                conn.commit()
+            output['location'] = checkLocation(cur, location)
+        else:
+            output['success'] = False
+            output['text'] = 'API token is not valid.'
+            output['location'] = True
+        cur.close()
+        conn.close()
+        return jsonify(output)
+'''
 
 @app.route('/plot/ratings', methods=["GET"])
 def plotRatings():
     output = {}
     output['success'] = False
     username = request.args.get('username')
-    session = connect()
-    cur = session.cursor()
+    conn = connect()
+    cur = conn.cursor()
     if username == 'everyone':
         sql = "SELECT rating FROM lunch_reviews"
         cur.execute(sql)
@@ -68,7 +87,7 @@ def plotRatings():
         output['success'] = False
         output['text'] = 'User has submitted no reviews to the database.'
     cur.close()
-    session.close()
+    conn.close()
     return jsonify(output)
 
 @app.route('/')
