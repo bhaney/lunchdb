@@ -3,13 +3,24 @@ import csv
 import psycopg2
 from os import getenv
 
-def checkLocation(cur, location):
+def getLocations(cur):
+    sql = "SELECT name from locations;"
+    cur.execute(sql)
+    rows = cur.fetchall()
+    lunch_list = [i[0] for i in rows]
+    return lunch_list
+
+def checkAlias(cur, location):
     sql = "SELECT exists(select 1 from aliases where alias=%s);"
     cur.execute(sql, (location,))
     rows = cur.fetchone()
-    return rows[0] #will return true or false
+    location_exists = rows[0]
+    if location_exists:
+        return True
+    else:
+        return False
 
-def insertLocationAlias(cur, data):
+def insertAlias(cur, data):
     sql = "INSERT INTO aliases (alias, name_id) VALUES (%s, %s);"
     output = insertDatabase(cur, sql, data)
     return output

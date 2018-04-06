@@ -10,7 +10,7 @@ from project_lunch.csv_helper import getCsv
 from project_lunch.db_helper import connect
 from project_lunch.plotting import histRatings
 from project_lunch.config import config
-from project_lunch.reviews import (checkLocation, insertLocationAlias, insertLocation, insertReview)
+from project_lunch.reviews import (getLocations, checkAlias, insertAlias, insertLocation, insertReview)
 
 app = Flask(__name__)
 
@@ -24,22 +24,46 @@ def postLunch():
     if request.method == 'POST':
         output = {}
         data = request.get_json()
+        location = data['actual']
         if data['token'] == getenv("LUNCH_TOKEN"):
             conn = connect()
             cur = conn.cursor()
-            location = data['actual']
             output = insertReview(cur, data)
             if output['success']:
                 conn.commit()
-            output['location'] = checkLocation(cur, location)
+            output['location'] = location
+            if checkAlias(cur, location):
+                output['list'] = getLocations(cur)
+            cur.close()
+            conn.close()
         else:
             output['success'] = False
             output['text'] = 'API token is not valid.'
-            output['location'] = True
-        cur.close()
-        conn.close()
+            output['location'] = location
+            output['list'] = []
         return jsonify(output)
 
+@app.route('/insert/alias', methods=["GET","POST"])
+def postAlias():
+    if request.method == 'POST':
+        output = {}
+        data = request.get_json() #gives alias, and location in db
+        if data['token'] == getenv("LUNCH_TOKEN"):
+            conn = connect()
+            cur = conn.cursor()
+            if checkAlias(cur,data):
+                output['new_alias'] = False
+                output['success'] = True
+            else:
+                insertAlias(cur,data)
+                output['new_alias'] = True
+                output['success'] = True
+            cur.close()
+            conn.close()
+        else:
+            output['new_alias'] = False
+            output['success'] = False
+        return jsonify(output)
 '''
 @app.route('/insert/location', methods=["GET","POST"])
 def postLocation():
