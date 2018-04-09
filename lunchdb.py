@@ -54,11 +54,11 @@ def postAlias():
         if getIdFromAlias(cur, alias):
             output['new_alias'] = False
             output['success'] = True
-            output['update'] = { 'message': 'Thanks for your feedback! \n No need to update. Alias already exists.' }
+            output['update'] = { 'message': 'Thanks for your feedback! Your review was saved. \n Alias already exists.' }
         else:
             name_id = getIdFromAlias(cur, name)
             output = insertAlias(cur, alias, name_id, name)
-            output['update'] = { 'message': 'Thanks for your feedback! \n'+output['text'] }
+            output['update'] = { 'message': 'Thanks for your feedback! Your review was saved. \n'+output['text'] }
             if output['success']:
                 conn.commit()
                 output['new_alias'] = True
