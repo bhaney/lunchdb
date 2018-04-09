@@ -10,7 +10,7 @@ from project_lunch.csv_helper import getCsv
 from project_lunch.db_helper import connect
 from project_lunch.plotting import histRatings
 from project_lunch.config import config
-from project_lunch.reviews import (getLocations, checkAlias, insertAlias, insertLocation, insertReview)
+from project_lunch.reviews import (getLocationNames, getLocationIds, getIdFromAlias, insertAlias, insertLocation, insertReview)
 
 app = Flask(__name__)
 
@@ -25,46 +25,56 @@ def postLunch():
         output = {}
         data = request.get_json()
         location = data['actual']
+        output['location'] = location
         if data['token'] == getenv("LUNCH_TOKEN"):
             conn = connect()
             cur = conn.cursor()
             output = insertReview(cur, data)
-            output['location'] = location
             if output['success']:
                 conn.commit()
-            if not checkAlias(cur, location):
-                output['list'] = getLocations(cur)
+                if not getIdFromAlias(cur, location):
+                    output['list'] = getLocationNames(cur)
             cur.close()
             conn.close()
         else:
             output['success'] = False
             output['text'] = 'API token is not valid.'
             output['location'] = location
-            output['list'] = []
         return jsonify(output)
 
-@app.route('/insert/alias', methods=["GET"])
+@app.route('/insert/alias', methods=["GET","POST"])
 def postAlias():
-    output = {}
-    alias = request.args.get('alias')
-    name_id = request.args.get('name_id')
-    conn = connect()
-    cur = conn.cursor()
-    if checkAlias(cur, alias):
-        output['new_alias'] = False
-        output['success'] = True
-    else:
-        insertAlias(cur, alias, name_id)
-        output['new_alias'] = True
-        output['success'] = True
-    cur.close()
-    conn.close()
-    return jsonify(output)
-'''
+    if request.method == 'POST':
+        output = {}
+        data = request.get_json()
+        alias = data['context']['alias']
+        name_id = data['context']['name_id']
+        conn = connect()
+        cur = conn.cursor()
+        if getIdFromAlias(cur, alias):
+            output['new_alias'] = False
+            output['success'] = True
+            output['update'] = { 'message': 'No need to update. Alias already exists.' }
+        else:
+            name_id = getIdFromAlias(cur, name_id)
+            output = insertAlias(cur, alias, name_id)
+            output['update'] = { 'message': output['text'] }
+            if output['success']:
+                conn.commit()
+                output['new_alias'] = True
+            else:
+                output['new_alias'] = False
+        cur.close()
+        conn.close()
+        return jsonify(output)
+
 @app.route('/insert/location', methods=["GET","POST"])
 def postLocation():
     if request.method == 'POST':
         output = {}
+        output['update'] = { 'message': 'TODO: A form to add a new location.'}
+        return jsonify(output)
+'''
         data = request.get_json()
         if data['token'] == getenv("LUNCH_TOKEN"):
             conn = connect()
