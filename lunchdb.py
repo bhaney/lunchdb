@@ -32,7 +32,7 @@ def postLunch():
             output['location'] = location
             if output['success']:
                 conn.commit()
-            if !checkAlias(cur, location):
+            if not checkAlias(cur, location):
                 output['list'] = getLocations(cur)
             cur.close()
             conn.close()
