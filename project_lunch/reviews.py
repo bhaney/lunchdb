@@ -26,11 +26,11 @@ def getIdFromAlias(cur, location):
     else:
         return rows[0]
 
-def insertAlias(cur, alias, nameid):
+def insertAlias(cur, alias, nameid, name):
     sql = "INSERT INTO aliases (alias, name_id) VALUES (%s, %s);"
     data = (alias, nameid)
     output = insertDatabase(cur, sql, data)
-    output['text'] = '**'+alias+'** registered as alias for **'+nameid+'**'
+    output['text'] = '**'+alias+'** registered as alias for **'+name+'**'
     return output
 
 def insertLocation(cur, data):

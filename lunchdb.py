@@ -48,7 +48,7 @@ def postAlias():
         output = {}
         data = request.get_json()
         alias = data['context']['alias']
-        name_id = data['context']['name_id']
+        name = data['context']['name']
         conn = connect()
         cur = conn.cursor()
         if getIdFromAlias(cur, alias):
@@ -56,8 +56,8 @@ def postAlias():
             output['success'] = True
             output['update'] = { 'message': 'No need to update. Alias already exists.' }
         else:
-            name_id = getIdFromAlias(cur, name_id)
-            output = insertAlias(cur, alias, name_id)
+            name_id = getIdFromAlias(cur, name)
+            output = insertAlias(cur, alias, name_id, name)
             output['update'] = { 'message': output['text'] }
             if output['success']:
                 conn.commit()
