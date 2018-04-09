@@ -20,8 +20,9 @@ def checkAlias(cur, location):
     else:
         return False
 
-def insertAlias(cur, data):
+def insertAlias(cur, alias, nameid):
     sql = "INSERT INTO aliases (alias, name_id) VALUES (%s, %s);"
+    data = (alias, nameid)
     output = insertDatabase(cur, sql, data)
     return output
 

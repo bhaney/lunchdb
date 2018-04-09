@@ -29,10 +29,10 @@ def postLunch():
             conn = connect()
             cur = conn.cursor()
             output = insertReview(cur, data)
+            output['location'] = location
             if output['success']:
                 conn.commit()
-            output['location'] = location
-            if checkAlias(cur, location):
+            if !checkAlias(cur, location):
                 output['list'] = getLocations(cur)
             cur.close()
             conn.close()
@@ -43,27 +43,23 @@ def postLunch():
             output['list'] = []
         return jsonify(output)
 
-@app.route('/insert/alias', methods=["GET","POST"])
+@app.route('/insert/alias', methods=["GET"])
 def postAlias():
-    if request.method == 'POST':
-        output = {}
-        data = request.get_json() #gives alias, and location in db
-        if data['token'] == getenv("LUNCH_TOKEN"):
-            conn = connect()
-            cur = conn.cursor()
-            if checkAlias(cur,data):
-                output['new_alias'] = False
-                output['success'] = True
-            else:
-                insertAlias(cur,data)
-                output['new_alias'] = True
-                output['success'] = True
-            cur.close()
-            conn.close()
-        else:
-            output['new_alias'] = False
-            output['success'] = False
-        return jsonify(output)
+    output = {}
+    alias = request.args.get('alias')
+    name_id = request.args.get('name_id')
+    conn = connect()
+    cur = conn.cursor()
+    if checkAlias(cur, alias):
+        output['new_alias'] = False
+        output['success'] = True
+    else:
+        insertAlias(cur, alias, name_id)
+        output['new_alias'] = True
+        output['success'] = True
+    cur.close()
+    conn.close()
+    return jsonify(output)
 '''
 @app.route('/insert/location', methods=["GET","POST"])
 def postLocation():
