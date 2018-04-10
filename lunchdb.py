@@ -49,16 +49,17 @@ def postAlias():
         data = request.get_json()
         alias = data['context']['alias']
         name = data['context']['name']
+        review = data['context']['review']
         conn = connect()
         cur = conn.cursor()
         if getIdFromAlias(cur, alias):
             output['new_alias'] = False
             output['success'] = True
-            output['update'] = { 'message': 'Thanks for your feedback! \n Alias already exists.' }
+            output['update'] = { 'message': review + '\n\n Alias already exists'}
         else:
             name_id = getIdFromAlias(cur, name)
             output = insertAlias(cur, alias, name_id, name)
-            output['update'] = { 'message': 'Thanks for your feedback! \n'+output['text'] }
+            output['update'] = { 'message': review + '\n\n' + output['text']}
             if output['success']:
                 conn.commit()
                 output['new_alias'] = True
@@ -68,31 +69,26 @@ def postAlias():
         conn.close()
         return jsonify(output)
 
+@app.route('/newlocation')
+def newLocation():
+    return render_template('newlocation.html')
+
 @app.route('/insert/location', methods=["GET","POST"])
 def postLocation():
     if request.method == 'POST':
         output = {}
-        output['update'] = { 'message': 'TODO: A form to add a new location.'}
-        return jsonify(output)
-'''
+        data = request.form
+        return jsonify(data)
+        #return render_template('locationthanks.html')
+
+@app.route('/unknown/location', methods=["GET","POST"])
+def unknownLocation():
+    if request.method == 'POST':
+        output = {}
         data = request.get_json()
-        if data['token'] == getenv("LUNCH_TOKEN"):
-            conn = connect()
-            cur = conn.cursor()
-            location_exists = data['exists']
-            location_name = data['exists']
-            output = insertReview(cur, data)
-            if output['success']:
-                conn.commit()
-            output['location'] = checkLocation(cur, location)
-        else:
-            output['success'] = False
-            output['text'] = 'API token is not valid.'
-            output['location'] = True
-        cur.close()
-        conn.close()
+        review = data['context']['review']
+        output['update'] = { 'message': review+'\n\n Add a new location with https://bots.bijanhaney.com/lunch/newlocation' }
         return jsonify(output)
-'''
 
 @app.route('/plot/ratings', methods=["GET"])
 def plotRatings():
@@ -119,6 +115,7 @@ def plotRatings():
     cur.close()
     conn.close()
     return jsonify(output)
+
 
 @app.route('/')
 def index():
