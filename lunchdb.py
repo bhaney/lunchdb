@@ -78,8 +78,23 @@ def postLocation():
     if request.method == 'POST':
         output = {}
         data = request.form
-        return jsonify(data)
-        #return render_template('locationthanks.html')
+        #check to see if name is just spaces
+        name = data['name'].replace(' ','')
+        if name == '':
+            return render_template('locationthanks.html', 
+                    success=False, text='Error: location name is empty')
+        conn = connect()
+        cur = conn.cursor()
+        output = insertLocation(cur, data)
+        if output['success']:
+            conn.commit()
+            out1 = insertAlias(cur, output['name_id'], output['name_id'], output['name'])
+            out2 = insertAlias(cur, output['name'], output['name_id'], output['name'])
+            if out1['success'] and out2['success']:
+                conn.commit()
+        cur.close()
+        conn.close()
+        return render_template('locationthanks.html', success=output['success'], text=output['text'])
 
 @app.route('/unknown/location', methods=["GET","POST"])
 def unknownLocation():

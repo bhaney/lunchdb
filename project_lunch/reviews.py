@@ -35,9 +35,11 @@ def insertAlias(cur, alias, nameid, name):
 
 def insertLocation(cur, data):
     sql = """INSERT INTO locations(name_id, name, type, description,
-             price, walk_time_min, location) VALUES (%(name_id)s, %(name)s, 
-             %(desc)s, %(price)s, %(walk_time)s, %(location)s); """
+             price, walk_time_min, location) VALUES (LOWER(REPLACE(%(name)s,' ', '_')),
+             %(name)s, %(type)s, %(desc)s, %(price)s, %(walk_time)s, %(location)s); """
     output = insertDatabase(cur, sql, data)
+    output['name_id'] = data['name'].lower().replace(" ", "_")
+    output['name'] = data['name']
     return output
 
 def insertReview(cur, data):
