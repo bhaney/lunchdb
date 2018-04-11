@@ -80,9 +80,10 @@ def postAlias():
         conn.close()
         return jsonify(output)
 
-@app.route('/newlocation')
+@app.route('/newlocation', methods=["GET"])
 def newLocation():
-    return render_template('newlocation.html')
+    name = request.args.get('name_id', '')
+    return render_template('newlocation.html', name_id=name)
 
 @app.route('/insert/location', methods=["GET","POST"])
 def postLocation():
@@ -90,20 +91,23 @@ def postLocation():
         output = {}
         data = request.form
         #check to see if name is just spaces
+        name_id = data['name_id'].replace(' ','')
         name = data['name'].replace(' ','')
-        if name == '':
+        if name == '' or name_id == '':
             return render_template('locationthanks.html', 
                     success=False, text='Error: location name is empty')
         conn = connect()
         cur = conn.cursor()
         # check to see if location name is already in database
-        if not checkAlias(cur, data['name']):
+        if not (checkAlias(cur, data['name']) or checkAlias(cur, data['name_id'])):
             output = insertLocation(cur, data)
             if output['success']:
                 conn.commit()
                 out1 = insertAlias(cur, output['name_id'], output['name_id'], output['name'])
+                if out1['success']:
+                    conn.commit()
                 out2 = insertAlias(cur, output['name'], output['name_id'], output['name'])
-                if out1['success'] and out2['success']:
+                if out2['success']:
                     conn.commit()
         else:
             output['success'] = False
@@ -118,7 +122,8 @@ def unknownLocation():
         output = {}
         data = request.get_json()
         review = data['context']['review']
-        output['update'] = { 'message': review+'\n\n Add a new location with https://bots.bijanhaney.com/lunch/newlocation' }
+        name_id = data['context']['alias']
+        output['update'] = { 'message': review+'\n\n Add a new location with https://bots.bijanhaney.com/lunch/newlocation?name_id='+name_id }
         return jsonify(output)
 
 @app.route('/plot/ratings', methods=["GET"])
