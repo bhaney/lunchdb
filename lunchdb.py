@@ -1,12 +1,12 @@
 #!/usr/bin/env python3.6
-from flask import Flask,jsonify,request,render_template
+from flask import Flask,jsonify,request,render_template,redirect
 from flask_cors import CORS, cross_origin
 import psycopg2
 import csv
 from os import getenv,system
 
 import project_lunch
-from project_lunch.csv_helper import getCsv
+from project_lunch.csv_helper import (getCsv, getLocationCsv)
 from project_lunch.db_helper import connect
 from project_lunch.plotting import histRatings
 from project_lunch.config import config
@@ -18,6 +18,14 @@ app = Flask(__name__)
 def makeCsv():
     results = getCsv()
     return jsonify(results)
+
+@app.route('/get/locations', methods=["GET"])
+def makeLocationCsv():
+    results = getLocationCsv()
+    if results['success']:
+        return redirect('https://bots.bijanhaney.com/csv_files/lunch_locations.csv')
+    else:
+        return 'Could not generate location CSV'
 
 @app.route('/insert/review', methods=["GET","POST"])
 def postLunch():
