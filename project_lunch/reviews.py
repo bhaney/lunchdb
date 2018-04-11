@@ -17,6 +17,12 @@ def getLocationIds(cur):
     lunch_list = [i[0] for i in rows]
     return lunch_list
 
+def checkAlias(cur, location):
+    sql = "SELECT exists(select 1 from aliases where alias=%s);"
+    cur.execute(sql, (location,))
+    rows = cur.fetchone()
+    return rows[0]
+
 def getIdFromAlias(cur, location):
     sql = "SELECT name_id FROM aliases WHERE alias=%s;"
     cur.execute(sql, (location,))

@@ -10,7 +10,7 @@ from project_lunch.csv_helper import (getCsv, getLocationCsv)
 from project_lunch.db_helper import connect
 from project_lunch.plotting import histRatings
 from project_lunch.config import config
-from project_lunch.reviews import (getLocationNames, getLocationIds, getIdFromAlias, insertAlias, insertLocation, insertReview)
+from project_lunch.reviews import (getLocationNames, getLocationIds, getIdFromAlias, insertAlias, insertLocation, insertReview, checkAlias)
 
 app = Flask(__name__)
 
@@ -96,13 +96,18 @@ def postLocation():
                     success=False, text='Error: location name is empty')
         conn = connect()
         cur = conn.cursor()
-        output = insertLocation(cur, data)
-        if output['success']:
-            conn.commit()
-            out1 = insertAlias(cur, output['name_id'], output['name_id'], output['name'])
-            out2 = insertAlias(cur, output['name'], output['name_id'], output['name'])
-            if out1['success'] and out2['success']:
+        # check to see if location name is already in database
+        if not checkAlias(cur, data['name']):
+            output = insertLocation(cur, data)
+            if output['success']:
                 conn.commit()
+                out1 = insertAlias(cur, output['name_id'], output['name_id'], output['name'])
+                out2 = insertAlias(cur, output['name'], output['name_id'], output['name'])
+                if out1['success'] and out2['success']:
+                    conn.commit()
+        else:
+            output['success'] = False
+            output['text'] = 'Location already exists in database.'
         cur.close()
         conn.close()
         return render_template('locationthanks.html', success=output['success'], text=output['text'])
