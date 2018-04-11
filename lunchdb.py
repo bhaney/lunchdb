@@ -14,10 +14,13 @@ from project_lunch.reviews import (getLocationNames, getLocationIds, getIdFromAl
 
 app = Flask(__name__)
 
-@app.route('/getcsv', methods=["GET"])
+@app.route('/get/reviews', methods=["GET"])
 def makeCsv():
     results = getCsv()
-    return jsonify(results)
+    if results['success']:
+        return redirect('https://bots.bijanhaney.com/csv_files/lunch_reviews.csv')
+    else:
+        return 'Could not generate lunch review CSV'
 
 @app.route('/get/locations', methods=["GET"])
 def makeLocationCsv():
