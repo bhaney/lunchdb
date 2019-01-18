@@ -43,7 +43,7 @@ def postLunch():
             output = insertReview(cur, data)
             if output['success']:
                 conn.commit()
-                if not getIdFromAlias(cur, location):
+                if not checkAlias(cur, location):
                     output['list'] = getLocationNames(cur)
             cur.close()
             conn.close()
@@ -63,7 +63,7 @@ def postAlias():
         review = data['context']['review']
         conn = connect()
         cur = conn.cursor()
-        if getIdFromAlias(cur, alias):
+        if checkAlias(cur, alias):
             output['new_alias'] = False
             output['success'] = True
             output['update'] = { 'message': review + '\n\n Alias already exists'}
